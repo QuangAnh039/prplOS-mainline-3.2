@@ -1,0 +1,157 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manoj Sekar <quic_sekar@quicinc.com>
+Date: Mon, 26 Feb 2024 18:26:38 +0530
+Subject: [PATCH 858/860] Multi-AP: Add support for VLAN related information
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add support to fill "multi_ap_vlanid" info to the hostapd config file.
+Add the Multi-AP Default 802.1Q Setting subelement into Multi-AP element
+generating and parsing.
+
+Upstream-Status: Backport [69d08629897269ae760b15b3ed4a3a22d702cd35]
+Signed-off-by: Manoj Sekar <quic_sekar@quicinc.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ hostapd/config_file.c          | 10 ++++++++++
+ hostapd/hostapd.conf           |  4 ++++
+ src/ap/ap_config.h             |  3 +++
+ src/ap/ieee802_11.c            |  1 +
+ src/common/ieee802_11_common.c | 35 ++++++++++++++++++++++++++++++++++
+ src/common/ieee802_11_common.h |  1 +
+ src/common/ieee802_11_defs.h   |  1 +
+ 7 files changed, 55 insertions(+)
+
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -4601,6 +4601,16 @@ static int hostapd_config_fill(struct ho
+ 			return -1;
+ 		}
+ 		bss->multi_ap_profile = val;
++	} else if (os_strcmp(buf, "multi_ap_vlanid") == 0) {
++		int val = atoi(pos);
++
++		if (val < 0 || val > MAX_VLAN_ID) {
++			wpa_printf(MSG_ERROR,
++				   "Line %d: Invalid multi_ap_vlan_id '%s'",
++				   line, buf);
++			return -1;
++		}
++		bss->multi_ap_vlanid = val;
+ 	} else if (os_strcmp(buf, "rssi_reject_assoc_rssi") == 0) {
+ 		conf->rssi_reject_assoc_rssi = atoi(pos);
+ 	} else if (os_strcmp(buf, "rssi_reject_assoc_timeout") == 0) {
+--- a/hostapd/hostapd.conf
++++ b/hostapd/hostapd.conf
+@@ -2508,6 +2508,10 @@ own_ip_addr=127.0.0.1
+ # 2 = Supports Multi-AP profile 2 as defined in Wi-Fi EasyMesh specification
+ #multi_ap_profile=2
+ 
++# Multi-AP VLAN ID
++# A valid non-zero VLAN ID will be used to update Default IEEE 802.1Q Setting
++#multi_ap_vlanid=0
++
+ # WPS UPnP interface
+ # If set, support for external Registrars is enabled.
+ #upnp_iface=br0
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -796,6 +796,9 @@ struct hostapd_bss_config {
+ 	int multi_ap; /* bitmap of BACKHAUL_BSS, FRONTHAUL_BSS */
+ 	int multi_ap_profile;
+ 
++    /* Primary VLAN ID to use in Multi-AP */
++    int multi_ap_vlanid;
++    
+ #ifdef CONFIG_AIRTIME_POLICY
+ 	unsigned int airtime_weight;
+ 	int airtime_limit;
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -100,6 +100,7 @@ static u8 * hostapd_eid_multi_ap(struct
+ 		multi_ap.capability |= MULTI_AP_FRONTHAUL_BSS;
+ 
+     multi_ap.profile = hapd->conf->multi_ap_profile;
++    multi_ap.vlanid = hapd->conf->multi_ap_vlanid;
+     
+ 	return eid + add_multi_ap_ie(eid, len, &multi_ap);
+ }
+--- a/src/common/ieee802_11_common.c
++++ b/src/common/ieee802_11_common.c
+@@ -2561,6 +2561,7 @@ u16 check_multi_ap_ie(const u8 *multi_ap
+ {
+ 	const struct element *elem;
+ 	bool ext_present = false;
++	unsigned int vlan_id;
+ 
+ 	os_memset(multi_ap, 0, sizeof(*multi_ap));
+ 
+@@ -2598,6 +2599,27 @@ u16 check_multi_ap_ie(const u8 *multi_ap
+ 				return WLAN_STATUS_ASSOC_DENIED_UNSPEC;
+ 			}
+ 			break;
++		case MULTI_AP_VLAN_SUB_ELEM_TYPE:
++			if (multi_ap->profile < MULTI_AP_PROFILE_2) {
++				wpa_printf(MSG_DEBUG,
++					   "Multi-AP IE invalid profile to read VLAN IE");
++				return WLAN_STATUS_INVALID_IE;
++			}
++			if (elen < 2) {
++				wpa_printf(MSG_DEBUG,
++					   "Multi-AP IE invalid Multi-AP VLAN subelement");
++				return WLAN_STATUS_INVALID_IE;
++			}
++
++			vlan_id = WPA_GET_LE16(pos);
++			if (vlan_id < 1 || vlan_id > 4094) {
++				wpa_printf(MSG_INFO,
++					   "Multi-AP IE invalid Multi-AP VLAN ID %d",
++					   vlan_id);
++				return WLAN_STATUS_INVALID_IE;
++			}
++			multi_ap->vlanid = vlan_id;
++			break;
+ 		default:
+ 			wpa_printf(MSG_DEBUG,
+ 				   "Ignore unknown subelement %u in Multi-AP IE",
+@@ -2655,6 +2677,19 @@ size_t add_multi_ap_ie(u8 *buf, size_t l
+ 		*pos++ = multi_ap->profile;
+ 	}
+ 
++	/* Add Multi-AP Default 802.1Q Setting subelement only for backhaul BSS
++	 */
++	if (multi_ap->vlanid &&
++	    multi_ap->profile >= MULTI_AP_PROFILE_2 &&
++	    (multi_ap->capability & MULTI_AP_BACKHAUL_BSS)) {
++		if (buf + len - pos < 4)
++			return 0;
++		*pos++ = MULTI_AP_VLAN_SUB_ELEM_TYPE;
++		*pos++ = 2;
++		WPA_PUT_LE16(pos, multi_ap->vlanid);
++		pos += 2;
++	}
++
+ 	*len_ptr = pos - len_ptr - 1;
+ 
+ 	return pos - buf;
+--- a/src/common/ieee802_11_common.h
++++ b/src/common/ieee802_11_common.h
+@@ -33,6 +33,7 @@ struct mb_ies_info {
+ struct multi_ap_params {
+ 	u8 capability;
+ 	u8 profile;
++	u16 vlanid;
+ };
+ 
+ /* Parsed Information Elements */
+--- a/src/common/ieee802_11_defs.h
++++ b/src/common/ieee802_11_defs.h
+@@ -1394,6 +1394,7 @@ struct ieee80211_ampe_ie {
+ 
+ #define MULTI_AP_SUB_ELEM_TYPE 0x06
+ #define MULTI_AP_PROFILE_SUB_ELEM_TYPE 0x07
++#define MULTI_AP_VLAN_SUB_ELEM_TYPE 0x08
+ 
+ #define MULTI_AP_TEAR_DOWN BIT(4)
+ #define MULTI_AP_FRONTHAUL_BSS BIT(5)

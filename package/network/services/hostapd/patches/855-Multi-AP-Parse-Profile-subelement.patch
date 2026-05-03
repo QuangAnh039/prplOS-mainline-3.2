@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manoj Sekar <quic_sekar@quicinc.com>
+Date: Mon, 26 Feb 2024 18:18:21 +0530
+Subject: [PATCH 855/860] Multi-AP: Parse Profile subelement
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Parse the indicate profile support for the Multi-AP Profile subelement.
+
+Upstream-Status: Backport [c3e5286537663ad4815d7aa387a1c84506a2b7e3]
+Signed-off-by: Manoj Sekar <quic_sekar@quicinc.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ src/common/ieee802_11_common.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+--- a/src/common/ieee802_11_common.c
++++ b/src/common/ieee802_11_common.c
+@@ -2564,6 +2564,10 @@ u16 check_multi_ap_ie(const u8 *multi_ap
+ 
+ 	os_memset(multi_ap, 0, sizeof(*multi_ap));
+ 
++	/* Default profile is 1, when Multi-AP profile subelement is not
++	 * present in the element. */
++	multi_ap->profile = 1;
++
+ 	for_each_element(elem, multi_ap_ie, multi_ap_len) {
+ 		u8 id = elem->id, elen = elem->datalen;
+ 		const u8 *pos = elem->data;
+@@ -2579,6 +2583,21 @@ u16 check_multi_ap_ie(const u8 *multi_ap
+ 				return WLAN_STATUS_INVALID_IE;
+ 			}
+ 			break;
++		case MULTI_AP_PROFILE_SUB_ELEM_TYPE:
++			if (elen < 1) {
++				wpa_printf(MSG_DEBUG,
++					   "Multi-AP IE invalid Multi-AP profile subelement");
++				return WLAN_STATUS_INVALID_IE;
++			}
++
++			multi_ap->profile = *pos;
++			if (multi_ap->profile > MULTI_AP_PROFILE_MAX) {
++				wpa_printf(MSG_DEBUG,
++					   "Multi-AP IE with invalid profile 0x%02x",
++					   multi_ap->profile);
++				return WLAN_STATUS_ASSOC_DENIED_UNSPEC;
++			}
++			break;
+ 		default:
+ 			wpa_printf(MSG_DEBUG,
+ 				   "Ignore unknown subelement %u in Multi-AP IE",

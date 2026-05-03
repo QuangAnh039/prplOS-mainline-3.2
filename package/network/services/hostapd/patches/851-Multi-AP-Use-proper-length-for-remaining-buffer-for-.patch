@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jouni Malinen <quic_jouni@quicinc.com>
+Date: Tue, 19 Mar 2024 16:44:00 +0200
+Subject: [PATCH 851/860] Multi-AP: Use proper length for remaining buffer for
+ the element
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Replace the hardcoded buffer length with the actually number of
+remaining bytes on the buffer. This is needed to be able to do real
+buffer size validation within add_multi_ap_ie().
+
+Furthermore, make hostapd_eid_multi_ap() static since it is not used
+outside this file.
+
+Upstream-Status: Backport [0e2ca2e4e2ad97f2ec914f8be48435b1f3224e3e]
+Signed-off-by: Jouni Malinen <quic_jouni@quicinc.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ src/ap/ieee802_11.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -87,7 +87,7 @@ static int add_associated_sta(struct hos
+ 			      struct sta_info *sta, int reassoc);
+ 
+ 
+-u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid)
++static u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid, size_t len)
+ {
+ 	struct multi_ap_params multi_ap = { 0 };
+ 
+@@ -99,7 +99,7 @@ u8 * hostapd_eid_multi_ap(struct hostapd
+ 	if (hapd->conf->multi_ap & FRONTHAUL_BSS)
+ 		multi_ap.capability |= MULTI_AP_FRONTHAUL_BSS;
+ 
+-	return eid + add_multi_ap_ie(eid, 9, &multi_ap);
++	return eid + add_multi_ap_ie(eid, len, &multi_ap);
+ }
+ 
+ 
+@@ -4978,7 +4978,7 @@ rsnxe_done:
+ #endif /* CONFIG_WPS */
+ 
+ 	if (sta && (sta->flags & WLAN_STA_MULTI_AP))
+-		p = hostapd_eid_multi_ap(hapd, p);
++		p = hostapd_eid_multi_ap(hapd, p, buf + buflen - p);
+ 
+ #ifdef CONFIG_P2P
+ 	if (sta && sta->p2p_ie && hapd->p2p_group) {

@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jurijs Soloveckis <jsoloveckis@maxlinear.com>
+Date: Wed, 22 Jan 2025 21:33:46 +0000
+Subject: [PATCH 860/860] Multi-AP: wpa_supplicant: added support for VLAN ID
+ and Multi-AP profile parsing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+For Multi-AP traffic separation requirement, wpa_supplicant parses 802.1Q Multi-AP sub-element and reports:
+- VLAN ID of the AP it connects to.
+- Multi-AP profile of the AP it connects to.
+
+Upstream-Status: Denied [https://patchwork.ozlabs.org/project/hostap/patch/DM4PR19MB6173508761EFFA0E7E366CD8A88E2@DM4PR19MB6173.namprd19.prod.outlook.com/#3434833]
+Signed-off-by: Jurijs Soloveckis <jsoloveckis@maxlinear.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ wpa_supplicant/config_ssid.h    |  7 +++++++
+ wpa_supplicant/events.c         | 12 ++++++++++++
+ wpa_supplicant/wpa_supplicant.c |  7 +++++--
+ 3 files changed, 24 insertions(+), 2 deletions(-)
+
+--- a/wpa_supplicant/config_ssid.h
++++ b/wpa_supplicant/config_ssid.h
+@@ -1200,6 +1200,13 @@ struct wpa_ssid {
+ 	int multi_ap_profile;
+ 
+ 	/**
++	 * multi_ap_primary_vlanid - Multi-AP Primary VLAN ID (Multi-AP Specification v2.0)
++	 * 0 = VLAN ID not set
++	 * 1-4094 = VLAN ID
++	 */
++	u16 multi_ap_primary_vlanid;
++
++	/**
+ 	 * beacon_prot - Whether Beacon protection is enabled
+ 	 *
+ 	 * This depends on management frame protection (ieee80211w) being
+--- a/wpa_supplicant/events.c
++++ b/wpa_supplicant/events.c
+@@ -2741,6 +2741,7 @@ static void multi_ap_process_assoc_resp(
+ {
+ 	struct ieee802_11_elems elems;
+ 	struct multi_ap_params multi_ap;
++	struct wpa_ssid *ssid = wpa_s->current_ssid;
+ 	u16 status;
+ 
+ 	wpa_s->multi_ap_ie = 0;
+@@ -2760,6 +2761,17 @@ static void multi_ap_process_assoc_resp(
+ 	wpa_s->multi_ap_fronthaul = !!(multi_ap.capability &
+ 				       MULTI_AP_FRONTHAUL_BSS);
+ 	wpa_s->multi_ap_ie = 1;
++
++	if (!ssid)
++		return;
++
++	ssid->multi_ap_primary_vlanid = 0;
++
++	if (wpa_s->multi_ap_backhaul) {
++		ssid->multi_ap_profile = multi_ap.profile;
++		if (ssid->multi_ap_backhaul_sta)
++			ssid->multi_ap_primary_vlanid = multi_ap.vlanid;
++	}
+ }
+ 
+ 
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -1007,11 +1007,14 @@ void wpa_supplicant_set_state(struct wpa
+ 
+ #if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
+ 		wpa_msg(wpa_s, MSG_INFO, WPA_EVENT_CONNECTED "- Connection to "
+-			MACSTR " completed [id=%d id_str=%s%s]%s",
++			MACSTR " completed [id=%d id_str=%s%s]%s"
++			" multi_ap_profile=%d multi_ap_primary_vlanid=%d",
+ 			MAC2STR(wpa_s->bssid),
+ 			ssid ? ssid->id : -1,
+ 			ssid && ssid->id_str ? ssid->id_str : "",
+-			fils_hlp_sent ? " FILS_HLP_SENT" : "", mld_addr);
++			fils_hlp_sent ? " FILS_HLP_SENT" : "", mld_addr,
++			ssid ? ssid->multi_ap_profile : 0,
++			ssid ? ssid->multi_ap_primary_vlanid : 0);
+ #endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
+ 		wpas_clear_temp_disabled(wpa_s, ssid, 1);
+ 		wpa_s->consecutive_conn_failures = 0;

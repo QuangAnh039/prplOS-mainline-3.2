@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manoj Sekar <quic_sekar@quicinc.com>
+Date: Mon, 26 Feb 2024 18:18:21 +0530
+Subject: [PATCH 856/860] Multi-AP: Reject non-Multi-AP STA association on
+ backhaul-only BSS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Do not allow non-Multi-AP STAs to associate with a BSS that is
+configured as a backhaul-only.
+
+Upstream-Status: Backport [9a1512532e80e9ef158d1c11b23691673cd5cc78]
+Signed-off-by: Manoj Sekar <quic_sekar@quicinc.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ src/ap/ieee802_11.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -3419,6 +3419,18 @@ static u16 check_multi_ap(struct hostapd
+ 	if (!hapd->conf->multi_ap)
+ 		return WLAN_STATUS_SUCCESS;
+ 
++	if (!multi_ap_ie) {
++		if (!(hapd->conf->multi_ap & FRONTHAUL_BSS)) {
++			hostapd_logger(hapd, sta->addr,
++				       HOSTAPD_MODULE_IEEE80211,
++				       HOSTAPD_LEVEL_INFO,
++				       "Non-Multi-AP STA tries to associate with backhaul-only BSS");
++			return WLAN_STATUS_ASSOC_DENIED_UNSPEC;
++		}
++
++		return WLAN_STATUS_SUCCESS;
++	}
++
+ 	status = check_multi_ap_ie(multi_ap_ie + 4, multi_ap_len - 4,
+ 				   &multi_ap);
+ 	if (status != WLAN_STATUS_SUCCESS)

@@ -1,0 +1,19 @@
+--- a/cache.c
++++ b/cache.c
+@@ -438,6 +438,7 @@ cache_dump_records(struct blob_buf *buf,
+ 	}
+ 
+ 	for (r = avl_find_element(&records, name, r, avl); r; r = next) {
++		const struct dns_srv_data *dsd = (const struct dns_srv_data*)r->rdata;
+ 		switch (r->type) {
+ 		case TYPE_TXT:
+ 			if (r->txt && strlen(r->txt)) {
+@@ -462,6 +463,8 @@ cache_dump_records(struct blob_buf *buf,
+ 			}
+ 			if (r->port)
+ 				blobmsg_add_u32(buf, "port", r->port);
++			if (r->rdlength > sizeof(*dsd))
++				blobmsg_add_string(buf, "target", (const char*)&dsd[1]);
+ 			break;
+ 		}
+ 

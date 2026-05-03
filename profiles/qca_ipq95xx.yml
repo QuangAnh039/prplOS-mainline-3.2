@@ -1,0 +1,37 @@
+---
+profiles:
+  - prpl_freedom
+target: ipq95xx
+subtarget: generic
+external_target: True
+description: Build image for prpl Foundation Freedom board
+feeds:
+  - name: feed_qca
+    uri: https://gitlab.com/prpl-foundation/prplOS/feed-qca.git
+    revision: mainline-3.2@518591222ddb42fba4f30932605103f4c99e8023
+
+packages:
+  - ipq95xx
+  - wireless-regdb
+  - hostapd-qca-utils
+  - ath12k-wifi-qcom-qcn92xx
+  - ath12k-caldata
+  - aq-fw-download
+  - aq_phy
+  - qca-ssdk-shell
+  - io-expander-freedom
+  - wireless-freedom
+  - kmod-usb-phy-ipq807x
+  - kmod-usb-dwc3-internal
+  - kmod-usb-dwc3-qcom-internal
+  - kmod-usb-storage
+  - kmod-usb-storage-extras
+  - kmod-usb-storage-uas
+  - kmod-fs-vfat
+  - kmod-telemetry-agent
+  - prpl-configuration-qca-ipq95xx
+
+diffconfig: |
+  CONFIG_TARGET_INITRAMFS_COMPRESSION_LZMA=y
+  CONFIG_BUSYBOX_CUSTOM=y
+  CONFIG_BUSYBOX_CONFIG_I2CSET=y

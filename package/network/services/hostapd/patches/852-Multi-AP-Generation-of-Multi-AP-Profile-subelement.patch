@@ -1,0 +1,83 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Manoj Sekar <quic_sekar@quicinc.com>
+Date: Mon, 26 Feb 2024 18:18:21 +0530
+Subject: [PATCH 852/860] Multi-AP: Generation of Multi-AP Profile subelement
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add support for including the Multi-AP Profile subelement into the
+Multi-AP element.
+
+Upstream-Status: Backport [0034112429d85aea6d8c8900e1b3a5cc1e451b5e]
+Signed-off-by: Manoj Sekar <quic_sekar@quicinc.com>
+Signed-off-by: Petr Štetiar <petr.stetiar@prplfoundation.org>
+---
+ src/common/ieee802_11_common.c | 13 ++++++++++++-
+ src/common/ieee802_11_common.h |  1 +
+ src/common/ieee802_11_defs.h   |  6 ++++++
+ 3 files changed, 19 insertions(+), 1 deletion(-)
+
+--- a/src/common/ieee802_11_common.c
++++ b/src/common/ieee802_11_common.c
+@@ -2562,7 +2562,7 @@ size_t add_multi_ap_ie(u8 *buf, size_t l
+ 	u8 *pos = buf;
+ 	u8 *len_ptr;
+ 
+-	if (len < 9)
++	if (len < 6)
+ 		return 0;
+ 
+ 	*pos++ = WLAN_EID_VENDOR_SPECIFIC;
+@@ -2573,10 +2573,21 @@ size_t add_multi_ap_ie(u8 *buf, size_t l
+ 	*pos++ = MULTI_AP_OUI_TYPE;
+ 
+ 	/* Multi-AP Extension subelement */
++	if (buf + len - pos < 3)
++		return 0;
+ 	*pos++ = MULTI_AP_SUB_ELEM_TYPE;
+ 	*pos++ = 1; /* len */
+ 	*pos++ = multi_ap->capability;
+ 
++	/* Add Multi-AP Profile subelement only for R2 or newer configuration */
++	if (multi_ap->profile >= MULTI_AP_PROFILE_2) {
++		if (buf + len - pos < 3)
++			return 0;
++		*pos++ = MULTI_AP_PROFILE_SUB_ELEM_TYPE;
++		*pos++ = 1;
++		*pos++ = multi_ap->profile;
++	}
++
+ 	*len_ptr = pos - len_ptr - 1;
+ 
+ 	return pos - buf;
+--- a/src/common/ieee802_11_common.h
++++ b/src/common/ieee802_11_common.h
+@@ -32,6 +32,7 @@ struct mb_ies_info {
+ 
+ struct multi_ap_params {
+ 	u8 capability;
++	u8 profile;
+ };
+ 
+ /* Parsed Information Elements */
+--- a/src/common/ieee802_11_defs.h
++++ b/src/common/ieee802_11_defs.h
+@@ -1393,11 +1393,17 @@ struct ieee80211_ampe_ie {
+ #define WFA_CAPA_OUI_TYPE 0x23
+ 
+ #define MULTI_AP_SUB_ELEM_TYPE 0x06
++#define MULTI_AP_PROFILE_SUB_ELEM_TYPE 0x07
++
+ #define MULTI_AP_TEAR_DOWN BIT(4)
+ #define MULTI_AP_FRONTHAUL_BSS BIT(5)
+ #define MULTI_AP_BACKHAUL_BSS BIT(6)
+ #define MULTI_AP_BACKHAUL_STA BIT(7)
+ 
++#define MULTI_AP_PROFILE_1	1
++#define MULTI_AP_PROFILE_2	2
++#define MULTI_AP_PROFILE_MAX	6
++
+ #define WMM_OUI_TYPE 2
+ #define WMM_OUI_SUBTYPE_INFORMATION_ELEMENT 0
+ #define WMM_OUI_SUBTYPE_PARAMETER_ELEMENT 1
