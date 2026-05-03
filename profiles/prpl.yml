@@ -5,17 +5,17 @@ feeds:
     uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_opensource.git
     revision: mainline-3.2@1532c7484d4dd35a4f57b7da1e5110237e2fd7c6
   - name: feed_amx
-    uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_amx.git
-    revision: mainline-3.2@b3e8f5a4adc66c77dc9e11899f7d75cc0c8cf9e9
+    uri: https://github.com/QuangAnh039/feed_amx
+    revision: main@08a0ffe91648d43e17871867e2e71f7a07129623
   - name: feed_gmap
     uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_gmap.git
     revision: v1.7.2@f55d934ddf8461ed5bd8355ef4a1671fe9eabda5
   - name: feed_net_core
-    uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_net_core.git
-    revision: mainline-3.2@a3d9cce38bebd0c1f3bc4b465bfb13898dd45251
+    uri: https://github.com/QuangAnh039/feed_net_core
+    revision: main@40e59c66e793094b6ab7768454e965543723f3af
   - name: feed_qos_firewall
-    uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_qos_firewall.git
-    revision: mainline-3.2@06031a81a6527e4d1cc89b68d3b01a834a9561b8
+    uri: https://github.com/QuangAnh039/feed_qos_firewall
+    revision: main@815ac593d7a76e802148f11bc36671230a9f56a4
   - name: feed_net_services
     uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_net_services.git
     revision: mainline-3.2@9a837f55309a82d5add35f7f5f070da56b592132
@@ -53,9 +53,8 @@ feeds:
     uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed_mcastd.git
     revision: v0.1.6@70db45513b9dbf642c9e29c348716fa285ee0f4c
   - name: feed_prpl
-    uri: https://gitlab.com/prpl-foundation/prplos/feeds/feed-prpl.git
-    tracking_branch: main
-    revision: main@507125d24f3ff2f28d83b76315f9eff4cda33bf8
+    uri: https://github.com/QuangAnh039/feed_prpl
+    revision: main@dfaea8a9d27a21c7c366cdd6c611c13dde2742cc
 
 additional_packages:
   - feed: packages
