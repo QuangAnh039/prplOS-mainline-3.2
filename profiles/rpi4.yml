@@ -1,0 +1,63 @@
+---
+description: Raspberry Pi 4 Model B 2GB with prplOS (public feeds)
+target: bcm27xx
+subtarget: bcm2711
+external_target: False
+
+profiles:
+  - rpi-4
+
+# feeds:
+#   - name: feed_prpl
+#     uri: https://github.com/QuangAnh039/feed_prpl.git
+#     revision: prplos@41cec243a05a435a2d476b3f12ed2e535d03b4d5
+
+packages:
+  # Basic system packages
+  - base-files
+  - busybox
+  - dropbear
+  - kmod-usb-storage
+  - kmod-fs-ext4
+  - kmod-fs-vfat
+  - block-mount
+
+  # Raspberry Pi specific
+  - kmod-brcmfmac
+  - kmod-brcmutil
+  - cypress-firmware-43455-sdio
+  - cypress-nvram-43455-sdio-rpi-4b
+
+  # Network tools
+  - iperf3
+  - ethtool
+  - tcpdump
+
+diffconfig: |
+  CONFIG_TARGET_bcm27xx=y
+  CONFIG_TARGET_bcm27xx_bcm2711=y
+  CONFIG_TARGET_bcm27xx_bcm2711_DEVICE_rpi-4=y
+  CONFIG_TARGET_ROOTFS_EXT4FS=y
+  CONFIG_TARGET_ROOTFS_PARTSIZE=512
+  CONFIG_TARGET_IMAGES_GZIP=y
+
+  # Boot from SD card
+  CONFIG_TARGET_ROOTFS_TARGZ=y
+  CONFIG_TARGET_KERNEL_PARTSIZE=64
+
+  # Basic features
+  CONFIG_PACKAGE_kmod-usb2=y
+  CONFIG_PACKAGE_kmod-usb3=y
+  CONFIG_PACKAGE_kmod-usb-storage=y
+  CONFIG_PACKAGE_kmod-fs-ext4=y
+  CONFIG_PACKAGE_kmod-fs-vfat=y
+  CONFIG_PACKAGE_block-mount=y
+
+  # Network
+  # CONFIG_PACKAGE_firewall4 is not set
+  # CONFIG_PACKAGE_dnsmasq is not set
+
+  # prplOS branding
+  CONFIG_VERSION_DIST="prplOS"
+  CONFIG_VERSION_MANUFACTURER="prpl Foundation"
+  CONFIG_VERSION_HOME_URL="https://prplfoundation.org"
