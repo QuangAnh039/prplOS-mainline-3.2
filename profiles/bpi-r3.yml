@@ -36,3 +36,5 @@ diffconfig: |
   # WiFi userspace
   # CONFIG_PACKAGE_hostapd-common=y
   # CONFIG_PACKAGE_hostapd-utils=y
+
+  # CONFIG_PACKAGE_obuspa is not set
