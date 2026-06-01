@@ -3,6 +3,11 @@ target: mediatek
 subtarget: filogic
 external_target: False
 
+feeds:
+  - name: feed_john
+    uri: https://github.com/QuangAnh039/feed_john
+    revision: main@3d412c2a5a9fdd0aec59e55db7cedfb9c7b574b6
+
 profiles:
   - bpi-r3
 

@@ -4,6 +4,14 @@ define Image/Prepare
 	# For UBI we want only one extra block
 	rm -f $(KDIR)/ubi_mark
 	echo -ne '\xde\xad\xc0\xde' > $(KDIR)/ubi_mark
+
+	# feed_john rootfs overlay: copy custom files (ODL defaults, etc.) onto
+	# the rootfs after all packages are installed, before the filesystem is packed.
+	# Lets feed_john fully replace files shipped by prplOS packages
+	# (one-file-one-truth override) instead of stacking higher-index ODL files.
+	if [ -d $(TOPDIR)/feeds/feed_john/rootfs-patch/. ]; then \
+		$(CP) $(TOPDIR)/feeds/feed_john/rootfs-patch/* $(TARGET_DIR)/; \
+	fi
 endef
 
 define Build/mt7981-bl2
