@@ -6,7 +6,7 @@ external_target: False
 feeds:
   - name: feed_john
     uri: https://github.com/QuangAnh039/feed_john
-    revision: main@31a785eb59ce760d054e1e5f3eb69af323691034
+    revision: main@7ef6c02c8abecd33b90087528a36da130c572dd5
 
 profiles:
   - bpi-r3
@@ -26,6 +26,12 @@ diffconfig: |
   CONFIG_TARGET_mediatek=y
   CONFIG_TARGET_mediatek_filogic=y
   CONFIG_TARGET_mediatek_filogic_DEVICE_bananapi_bpi-r3=y
+
+  CONFIG_KERNEL_GIT_CLONE_URI="https://github.com/QuangAnh039/linux-bpi-r3"
+  CONFIG_KERNEL_GIT_DEPTH=""
+  CONFIG_KERNEL_GIT_REF="edd2675f781cbde7c9063e13a79932c0203b9a35"
+  CONFIG_KERNEL_GIT_LINUX_VERSION="5.15.167-edd2675f"
+  CONFIG_KERNEL_SECURITY=y
 
   # Image format - SD card boot
   # CONFIG_TARGET_ROOTFS_PARTSIZE=512
