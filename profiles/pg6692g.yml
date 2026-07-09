@@ -1,0 +1,22 @@
+description: Platform specific packages and features for the Kaon PG6692G board
+target: venus
+subtarget: generic
+external_target: True
+
+profiles:
+  - pg6692g
+
+feeds:
+  - name: feed_anhnq
+    uri:  https://github.com/QuangAnh039/feed_anhnq
+    revision: main@92c3f315a139de572c1a730d6e061d61bb6b9189
+  - name: feed_ca
+    uri:  https://github.com/QuangAnh039/feed_ca
+    revision: main@c73e143a0823ae750a3e05e0f76adaa38173a933
+packages:
+  - venus
+  - 
+  - 
+diffconfig: |
+  CONFIG_TARGET_venus=y
+  CONFIG_TARGET_venus_generic=y
