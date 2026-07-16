@@ -9,7 +9,7 @@ profiles:
 feeds:
   - name: feed_anhnq
     uri:  https://github.com/QuangAnh039/feed_anhnq
-    revision: main@92c3f315a139de572c1a730d6e061d61bb6b9189
+    revision: main@70a06de9f2b05e7ef813c2fef742b2d5e0cdc463
   - name: feed_ca
     uri:  https://github.com/QuangAnh039/feed_ca
     revision: main@c73e143a0823ae750a3e05e0f76adaa38173a933
@@ -20,3 +20,7 @@ packages:
 diffconfig: |
   CONFIG_TARGET_venus=y
   CONFIG_TARGET_venus_generic=y
+  CONFIG_KERNEL_GIT_CLONE_URI="https://github.com/QuangAnh039/linux-venus.git"
+  CONFIG_KERNEL_GIT_DEPTH=""
+  CONFIG_KERNEL_GIT_REF="5e81f1ad9ba4e35afbc296e33176447f45cd3649"
+  CONFIG_KERNEL_GIT_LINUX_VERSION="6.6.86-5e81f1ad9ba"
